@@ -1,0 +1,28 @@
+.kpi--orange { background: linear-gradient(135deg, #ff9f0a, #ff375f); }
+.feats { display: flex; flex-wrap: wrap; gap: 6px; }
+.feats label { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; padding: 5px 10px; border-radius: 999px; border: 1px solid var(--line-2); cursor: pointer; user-select: none; }
+.feats input { accent-color: var(--accent); margin: 0; }
+.feats label:has(input:not(:checked)) { color: var(--faint); border-style: dashed; }
+
+.confusion { display: grid; grid-template-columns: auto 1fr 1fr; gap: 4px; font-size: 12px; margin-top: 6px; }
+.confusion > div { padding: 8px; border-radius: 8px; text-align: center; font-variant-numeric: tabular-nums; }
+.confusion .h { color: var(--muted); font-weight: 600; padding: 4px; }
+.confusion .rh { text-align: right; }
+.confusion .c { background: var(--card-2); border: 1px solid var(--line); }
+.confusion .c b { display: block; font-size: 17px; }
+.confusion .good { background: color-mix(in srgb, var(--good) 14%, transparent); border-color: transparent; }
+.confusion .bad { background: color-mix(in srgb, var(--bad) 10%, transparent); border-color: transparent; }
+.conf-note { grid-column: 1 / -1; text-align: left !important; color: var(--muted); padding: 6px 0 0 !important; line-height: 1.45; }
+
+.lead-name { font-weight: 500; }
+.lead-sub { display: block; color: var(--muted); font-size: 12px; }
+.why { display: flex; flex-wrap: wrap; gap: 4px; white-space: normal; }
+.why { max-width: 300px; }
+.why span { font-size: 11.5px; padding: 2px 8px; border-radius: 999px; background: var(--line); }
+.why span.up { background: color-mix(in srgb, var(--good) 14%, transparent); color: var(--good); }
+.why span.down { background: color-mix(in srgb, var(--bad) 12%, transparent); color: var(--bad); }
+.score-pill { display: inline-block; min-width: 38px; text-align: center; font-weight: 600; padding: 2px 8px; border-radius: 8px; }
+
+.method { display: grid; gap: 10px; color: var(--muted); font-size: 14px; }
+.method strong { color: var(--text); }
+code { font-family: var(--mono); font-size: 12px; }

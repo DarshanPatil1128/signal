@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Signal — explainable lead scoring</title>
+  <meta name="description" content="Train an explainable lead-scoring model in the browser: logistic regression with ROC/AUC, cumulative gains, feature effects, and a ranked call list with reasons." />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23ff9f0a'/%3E%3Cg stroke='white' stroke-width='2.6' stroke-linecap='round'%3E%3Cpath d='M9 23v-4M14 23v-8M19 23v-12M24 23V8'/%3E%3C/g%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="kit.css" />
+  <link rel="stylesheet" href="app.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar__in">
+      <a class="topbar__back" href="https://darshanpatil.me/#work">← Darshan Patil</a>
+      <span class="topbar__name"><span class="logo" style="background:linear-gradient(135deg,#ff9f0a,#ff375f)">S</span>Signal</span>
+      <nav class="topbar__links">
+        <a href="#method">The model</a>
+        <a href="https://github.com/DarshanPatil1128/signal" target="_blank" rel="noopener">GitHub</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="page">
+    <section class="hero">
+      <p class="hero__eyebrow" style="color:var(--c3)">Explainable lead scoring</p>
+      <h1>Call the right leads first.</h1>
+      <p>Signal trains a lead-scoring model right in your browser, shows how well it separates buyers from browsers,
+        and gives reps a ranked call list with the reasons behind every score.</p>
+      <div class="hero__actions no-print">
+        <label class="btn file-btn">Upload leads CSV<input type="file" id="file" accept=".csv,text/csv" /></label>
+        <button class="btn btn--ghost" id="dlSample">Download sample CSV</button>
+        <button class="btn btn--plain" id="reset">Reset to sample</button>
+        <span class="note" id="dataNote">1,500 synthetic leads · trained live in your browser</span>
+      </div>
+    </section>
+
+    <div class="grid grid--side">
+      <aside class="card card--sticky no-print" id="controls">
+        <p class="section-label">Training</p>
+        <div class="field">
+          <div class="field__row"><label for="split">Held out for testing</label><output for="split"></output></div>
+          <input type="range" id="split" min="10" max="50" step="5" value="30" />
+        </div>
+        <div class="field">
+          <div class="field__row"><label for="reg">Regularization (L2)</label><output for="reg"></output></div>
+          <input type="range" id="reg" min="0" max="6" step="1" value="2" />
+          <span class="note">Higher values shrink weights and reduce overfitting</span>
+        </div>
+        <div class="field">
+          <div class="field__row"><label>Features used</label><span class="note" id="featCount"></span></div>
+          <div class="feats" id="feats"></div>
+        </div>
+
+        <p class="section-label">Working the list</p>
+        <div class="field">
+          <div class="field__row"><label for="cut">Reps call the top</label><output for="cut"></output></div>
+          <input type="range" id="cut" min="5" max="60" step="5" value="20" />
+        </div>
+        <div class="confusion" id="conf"></div>
+      </aside>
+
+      <div class="stack">
+        <div class="kpis">
+          <div class="kpi kpi--hero kpi--orange"><div class="kpi__label">Conversions captured</div><div class="kpi__value" id="kCap">–</div><div class="kpi__hint" id="kCapHint"></div></div>
+          <div class="kpi"><div class="kpi__label">Lift vs. random</div><div class="kpi__value" id="kLift">–</div><div class="kpi__hint" id="kLiftHint"></div></div>
+          <div class="kpi"><div class="kpi__label">AUC (test set)</div><div class="kpi__value" id="kAuc">–</div><div class="kpi__hint" id="kAucHint"></div></div>
+          <div class="kpi"><div class="kpi__label">Base conversion rate</div><div class="kpi__value" id="kBase">–</div><div class="kpi__hint" id="kBaseHint"></div></div>
+        </div>
+
+        <div class="grid grid--2">
+          <div class="card">
+            <div class="card__head"><span class="card__title">Cumulative gains</span><span class="card__sub">Share of conversions found vs. share of leads called</span></div>
+            <div class="chart" id="gains"></div>
+            <div class="legend"><span><i style="background:var(--c3)"></i>Signal</span><span><i style="background:var(--faint)"></i>Random order</span></div>
+          </div>
+          <div class="card">
+            <div class="card__head"><span class="card__title">ROC curve</span><span class="card__sub">True vs. false positive rate</span></div>
+            <div class="chart" id="roc"></div>
+            <div class="legend"><span><i style="background:var(--c1)"></i>Signal</span><span><i style="background:var(--faint)"></i>Coin flip</span></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card__head"><span class="card__title">What drives conversion</span><span class="card__sub">Standardized model weights — right raises the score, left lowers it</span></div>
+          <div class="chart" id="weights"></div>
+        </div>
+
+        <div class="card">
+          <div class="card__head"><span class="card__title">Call list</span><span class="card__sub" id="listSub"></span></div>
+          <div class="table-wrap">
+            <table id="list">
+              <thead><tr><th class="hide-sm">#</th><th>Lead</th><th class="num">Score</th><th>Outcome</th><th>Why</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card" id="method">
+          <div class="card__head"><span class="card__title">The model</span></div>
+          <div class="method">
+            <p><strong>Features.</strong> Text columns become one-hot indicators; numeric columns are standardized so their weights are comparable. ID-like columns are ignored.</p>
+            <p><strong>Training.</strong> Logistic regression fitted by batch gradient descent with L2 regularization, on a random training split. Every chart reports on leads the model never saw.</p>
+            <p><strong>Evaluation.</strong> AUC measures how often a converter outranks a non-converter. Cumulative gains shows the business version: how many conversions you find if reps only call the top slice.</p>
+            <p><strong>Explanations.</strong> Each lead’s reasons are the features contributing most to its score (weight × value), which is exact for a linear model.</p>
+          </div>
+          <p class="note" style="margin-top:14px">Upload any CSV with a 0/1 <code>converted</code> column. Sample columns: <code>lead_id, source, industry, company_size, title_level, pages_viewed, email_opens, demo_requested, days_since_last_touch, converted</code>. Sample data is synthetic.</p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <span>Built by <a href="https://darshanpatil.me">Darshan Patil</a></span>
+    <span>Model trains locally · no data leaves your browser.</span>
+  </footer>
+
+  <script src="kit.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
