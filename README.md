@@ -22,7 +22,7 @@ Sales teams have more leads than time. Calling in order of arrival wastes most c
 
 ## How it works
 
-- **Features:** text columns are one-hot encoded and numeric columns are standardized. ID-like columns (`lead_id`, `email`, …) are skipped automatically.
+- **Features:** text columns are one-hot encoded and numeric columns are standardized using training-set statistics only, so nothing leaks from the test set. ID-like columns (`lead_id`, `email`, …) are skipped automatically.
 - **Training:** batch gradient descent on log-loss with L2 regularization, 400 epochs, on a seeded random train/test split.
 - **AUC:** computed with the Mann–Whitney rank formulation, with ties handled.
 - **Explanations:** for a linear model, each feature's contribution to the log-odds is exactly weight × value, so the reasons shown are the actual drivers of that score.

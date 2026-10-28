@@ -115,6 +115,12 @@
     const order = rows.map((_, i) => [rnd(), i]).sort((a, b) => a[0] - b[0]).map((p) => p[1]);
     const nTest = Math.round(rows.length * Number($('#split').value) / 100);
     const testIdx = order.slice(0, nTest), trainIdx = order.slice(nTest);
+    // Standardize with statistics from the training rows only, so the test set stays truly unseen
+    schema.filter((f) => f.type === 'num').forEach((f) => {
+      const v = trainIdx.map((i) => Number(rows[i][f.name]));
+      f.mean = v.reduce((a, b) => a + b, 0) / v.length;
+      f.sd = Math.sqrt(v.reduce((a, b) => a + (b - f.mean) ** 2, 0) / v.length) || 1;
+    });
     const Y = rows.map((r) => (Number(r[TARGET]) ? 1 : 0));
     const X = rows.map((r) => vectorize(r, names));
     const model = train(trainIdx.map((i) => X[i]), trainIdx.map((i) => Y[i]), LAMBDAS[Number($('#reg').value)]);

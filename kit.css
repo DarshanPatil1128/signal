@@ -196,3 +196,7 @@ td.wrap { white-space: normal; min-width: 240px; }
   body { background: #fff; color: #000; }
   .card, .kpi { box-shadow: none; break-inside: avoid; }
 }
+
+.tryit { margin-top: 16px; font-size: 14px; color: var(--muted); display: inline-flex; gap: 8px; align-items: baseline; padding: 8px 14px; border-radius: 12px; background: var(--card); border: 1px solid var(--line); }
+.tryit::before { content: "✦"; color: var(--accent); }
+.tryit b { color: var(--text); font-weight: 600; }
